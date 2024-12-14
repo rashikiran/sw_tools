@@ -5,9 +5,11 @@ if [ "$1" = "" ];then
         exit 1
 fi
 
-DIR=`realpath $1`
+TDIR=`realpath $1`
 
-if [ "$DIR" = "$PWD" ];then
+DIR=$1
+
+if [ "$TDIR" = "$PWD" ];then
         echo "search_dir can not be current directory"
         echo "help : ./find.sh <search_dir>"
         exit 1
@@ -29,279 +31,170 @@ check_file_and_exit()
         fi
 }
 
-#====================================================================================================
-# Locks
-#	-- spinlock	: Done
-#	-- mutex	: Done
-#	-- Semaphore	: Done
-#
-# Contexts
-#	-- timer	: Done
-#	-- tasklet	: Done
-#	-- workqueue	: Done
-#	-- softirqs	
-#	-- irqs		: Done
-#	-- threads
-#		-- Kthread threads
-#		-- workQueue threads
-#		-- IRQ threads
-#
-# Events/Signals
-#	-- 
-#
+rm -f *.txt *.csv
+
+linux_kernel_spin_lock=("spin_lock_init" "raw_spin_lock_init" "DEFINE_SPINLOCK")
+linux_kernel_mutex=("mutex_init" "__mutex_init" "DEFINE_MUTEX")
+linux_kernel_semaphores=("sema_init" "DEFINE_SEMAPHORE")
+linux_kernel_timers=("timer_setup" "timer_setup_on_stack" "DEFINE_TIMER")
+linux_kernel_tasklets=("tasklet_setup" "tasklet_init" "DECLARE_TASKLET" "DECLARE_TASKLET_DISABLED" "DECLARE_TASKLET_OLD" "DECLARE_TASKLET_DISABLED_OLD")
+linux_kernel_work_queues=("INIT_WORK" "INIT_DELAYED_WORK" "INIT_WORK_ONSTACK" "INIT_DELAYED_WORK_ONSTACK" "INIT_DEFERRABLE_WORK" "INIT_DEFERRABLE_WORK_ONSTACK" "INIT_RCU_WORK" "INIT_RCU_WORK_ONSTACK" "DECLARE_WORK" "DECLARE_DELAYED_WORK" "DECLARE_DEFERRABLE_WORK")
+linux_kernel_kthread_works=("KTHREAD_WORK_INIT" "KTHREAD_DELAYED_WORK_INIT" "DEFINE_KTHREAD_WORK" "DEFINE_KTHREAD_DELAYED_WORK" "kthread_init_work" "kthread_init_delayed_work")
+linux_kernel_irqs=("request_irq" "request_threaded_irq" "request_any_context_irq" "request_nmi" "request_percpu_irq" "request_percpu_nmi" "devm_request_threaded_irq" "devm_request_irq" "devm_request_any_context_irq")
+linux_kernel_kthreads=("kthread_create_on_node" "kthread_create_on_cpu" "kthread_create" "kthread_run" "kthread_run_on_cpu" "kthread_create_worker" "kthread_create_worker_on_cpu")
+linux_kernel_work_queue_threads=("alloc_ordered_workqueue" "create_workqueue" "create_freezable_workqueue" "create_singlethread_workqueue" "alloc_workqueue")
+linux_kernel_irq_threads=("request_threaded_irq" "devm_request_threaded_irq")
+eloop_timers=("eloop_register_timeout")
+wpa_supplicant_events=("wpa_supplicant_event")
+sockets=("socket(" "socket (")
+
+create_csv()
+{
+        echo "Extracting \"$1\" ... "
+
+        sed -i 's/\([^:]*:[^:]*\):[[:space:]]*\([[:print:]]\)/\1:\2/' temp.txt
+        cat temp.txt  | grep -v '\"' | grep -v '^*' | sort | uniq > $1.txt
+        awk -F':' '{ print $1 "," $2 "," $3 }' $1.txt  > $1.csv
+        rm -f temp.txt
+
+        echo "------------- $1 -------------" >> contexts.txt
+        cat $1.txt | sort | uniq | grep -v '^*' >> contexts.txt
+        echo -e "\n" >> contexts.txt
+
+        # Check if file size is 0 bytes
+        if [ $(stat -c %s "$1.txt") -eq 0 ]; then
+            rm -f "$1.txt" "$1.csv"
+        fi
+}
+
+search_pattern()
+{
+	rm -f temp.txt
+
+	array_name="$1"
+	eval "selected_array=(\"\${$array_name[@]}\")"
+
+	for pattern in "${selected_array[@]}";
+	do
+		find $DIR -iname "*.[ch]" -print | xargs grep -ni "$pattern" |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' >> temp.txt
+	done
+}
+
 #====================================================================================================
 #spin_lock
+create_linux_kernel_spin_lock_csv()
+{
+	search_pattern "linux_kernel_spin_lock"
+	create_csv "linux_kernel_spin_lock"
+}
+create_linux_kernel_spin_lock_csv
 
-echo "Extracting spinlocks with \"spin_lock_init\", \"raw_spin_lock_init\", \"DEFINE_SPINLOCK\" ..."
-
-rm -f spin_locks.txt
-rm -f contexts.txt
-
-grep -rhw "spin_lock_init" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' > spin_locks.txt
-grep -rhw "raw_spin_lock_init" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' >> spin_locks.txt
-grep -rhw "DEFINE_SPINLOCK" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' >> spin_locks.txt
-
-echo "------------- SpinLocks -------------" > contexts.txt
-cat spin_locks.txt | sort | uniq >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "spin_locks.txt") -eq 0 ]; then
-    rm -f "spin_locks.txt"
-fi
 #====================================================================================================
 #mutex
-
-echo "Extracting mutex with \"mutex_init\", \"__mutex_init\", \"DEFINE_MUTEX\" ..."
-
-rm -f mutex.txt
-grep -rhw "mutex_init" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' > mutex.txt
-grep -rhw "__mutex_init" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' >> mutex.txt
-grep -rhw "DEFINE_MUTEX" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' >> mutex.txt
-
-echo "------------- Mutex -------------" >> contexts.txt
-cat mutex.txt | sort | uniq >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "mutex.txt") -eq 0 ]; then
-    rm -f "mutex.txt"
-fi
+create_linux_kernel_mutex_csv()
+{
+	search_pattern "linux_kernel_mutex"
+	create_csv "linux_kernel_mutex"
+}
+create_linux_kernel_mutex_csv
 #====================================================================================================
 #semaphore
-
-echo "Extracting mutex with \"sema_init\", \"DEFINE_SEMAPHORE\" ..."
-
-rm -f semaphore.txt
-grep -rhw "sema_init" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' > semaphore.txt
-grep -rhw "DEFINE_SEMAPHORE" $DIR |  sed 's/^[ \t]*//' | sort | uniq |  grep -v '^*' >> semaphore.txt
-
-echo "------------- Semaphore -------------" >> contexts.txt
-cat semaphore.txt | sort | uniq >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "semaphore.txt") -eq 0 ]; then
-    rm -f "semaphore.txt"
-fi
-
+create_linux_kernel_semaphore_csv()
+{
+	search_pattern "linux_kernel_semaphores"
+	create_csv "linux_kernel_semaphores"
+}
+create_linux_kernel_semaphore_csv
 #====================================================================================================
 #timer
-
-echo "Extracting timer with \"timer_setup\", \"timer_setup_on_stack\", \"DEFINE_TIMER\" ..."
-
-rm -f timer.txt
-grep -rhw "timer_setup" $DIR |  sed 's/^[ \t]*//' |  sort | uniq | grep -v '^*' > timer.txt
-grep -rhw "timer_setup_on_stack" $DIR |  sed 's/^[ \t]*//' |  sort | uniq | grep -v '^*' >> timer.txt
-grep -rhw "DEFINE_TIMER" $DIR |  sed 's/^[ \t]*//' >> timer.txt
-
-echo "------------- Timer -------------" >> contexts.txt
-cat timer.txt | sort | uniq >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "timer.txt") -eq 0 ]; then
-    rm -f "timer.txt"
-fi
+create_linux_kernel_timer_csv()
+{
+	search_pattern "linux_kernel_timers"
+	create_csv "linux_kernel_timers"
+}
+create_linux_kernel_timer_csv
 #====================================================================================================
 #tasklet
 
-echo "Extracting tasklet with \"tasklet_setup\", \"tasklet_init\", \"DECLARE_TASKLET\" ..."
-
-rm -f tasklet.txt
-grep -rhw "tasklet_setup" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > tasklet.txt
-grep -rhw "tasklet_init" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> tasklet.txt
-grep -rhw "DECLARE_TASKLET" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> tasklet.txt
-grep -rhw "DECLARE_TASKLET_DISABLED" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> tasklet.txt
-grep -rhw "DECLARE_TASKLET_OLD" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> tasklet.txt
-grep -rhw "DECLARE_TASKLET_DISABLED_OLD" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> tasklet.txt
-
-echo "------------- Tasklet -------------" >> contexts.txt
-cat tasklet.txt | sort | uniq >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "tasklet.txt") -eq 0 ]; then
-    rm -f "tasklet.txt"
-fi
+create_linux_kernel_tasklet_csv()
+{
+	search_pattern "linux_kernel_tasklets"
+	create_csv "linux_kernel_tasklets"
+}
+create_linux_kernel_tasklet_csv
 #====================================================================================================
 #work_queue
-
-echo "Extracting workqueue with \"INIT_WORK\", \"INIT_DELAYED_WORK\" ..."
-
-rm -f work_queue.txt
-grep -rhw "INIT_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > work_queue.txt
-grep -rhw "INIT_DELAYED_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "INIT_WORK_ONSTACK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "INIT_DELAYED_WORK_ONSTACK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "INIT_DEFERRABLE_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "INIT_DEFERRABLE_WORK_ONSTACK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "INIT_RCU_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "INIT_RCU_WORK_ONSTACK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-
-grep -rhw "DECLARE_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "DECLARE_DELAYED_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-grep -rhw "DECLARE_DEFERRABLE_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue.txt
-
-echo "------------- work_queue -------------" >> contexts.txt
-cat work_queue.txt | sort | uniq | grep -v '^*' >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "work_queue.txt") -eq 0 ]; then
-    rm -f "work_queue.txt"
-fi
+create_linux_kernel_work_queues_csv()
+{
+	search_pattern "linux_kernel_work_queues"
+	create_csv "linux_kernel_work_queues"
+}
+create_linux_kernel_work_queues_csv
 #====================================================================================================
 #Kthread works
-echo "Extracting kthread works..."
-
-rm -f kthread_works.txt
-grep -rhw "KTHREAD_WORK_INIT" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > kthread_works.txt
-grep -rhw "KTHREAD_DELAYED_WORK_INIT" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthread_works.txt
-grep -rhw "DEFINE_KTHREAD_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthread_works.txt
-grep -rhw "DEFINE_KTHREAD_DELAYED_WORK" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthread_works.txt
-grep -rhw "kthread_init_work" $DIR |  sed 's/^[ \t]*//'  | sort | uniq | grep -v '^*' >> kthread_works.txt
-grep -rhw "kthread_init_delayed_work" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthread_works.txt
-
-echo "------------- kthread works -------------" >> contexts.txt
-cat kthread_works.txt | sort | uniq | grep -v '^*'  >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "kthread_works.txt") -eq 0 ]; then
-    rm -f "kthread_works.txt"
-fi
+create_linux_kernel_kthread_works_csv()
+{
+	search_pattern "linux_kernel_kthread_works"
+	create_csv "linux_kernel_kthread_works"
+}
+create_linux_kernel_kthread_works_csv
 #====================================================================================================
 # SoftIRQ
 
 #====================================================================================================
 # IRQ
-
-echo "Extracting IRQs..."
-
-rm -f irq.txt
-grep -rhw "request_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > irq.txt
-grep -rhw "request_threaded_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-grep -rhw "request_any_context_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-grep -rhw "request_nmi" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-grep -rhw "request_percpu_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-grep -rhw "request_percpu_nmi" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-grep -rhw "devm_request_threaded_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-grep -rhw "devm_request_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-grep -rhw "devm_request_any_context_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq.txt
-
-echo "------------- irqs -------------" >> contexts.txt
-cat irq.txt | sort | uniq | grep -v '^*' >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "irq.txt") -eq 0 ]; then
-    rm -f "irq.txt"
-fi
+create_linux_kernel_irqs_csv()
+{
+	search_pattern "linux_kernel_irqs"
+	create_csv "linux_kernel_irqs"
+}
+create_linux_kernel_irqs_csv
 #====================================================================================================
 #Kthreads
-echo "Extracting threads created using kthread APIs..."
-
-rm -f kthreads.txt
-grep -rhw "kthread_create_on_node" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > kthreads.txt
-grep -rhw "kthread_create_on_cpu" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthreads.txt
-grep -rhw "kthread_create" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthreads.txt
-grep -rhw "kthread_run" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthreads.txt
-grep -rhw "kthread_run_on_cpu" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthreads.txt
-grep -rhw "kthread_create_worker" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthreads.txt
-grep -rhw "kthread_create_worker_on_cpu" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> kthreads.txt
-
-echo "------------- kthread threads -------------" >> contexts.txt
-cat kthreads.txt | sort | uniq | grep -v '^*'  >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "kthreads.txt") -eq 0 ]; then
-    rm -f "kthreads.txt"
-fi
+create_linux_kernel_kthreads_csv()
+{
+	search_pattern "linux_kernel_kthreads"
+	create_csv "linux_kernel_kthreads"
+}
+create_linux_kernel_kthreads_csv
 #====================================================================================================
 #workqueue threads
-echo "Extracting threads created using workqueue APIs..."
-
-rm -f work_queue_threads.txt
-grep -rhw "alloc_ordered_workqueue" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > work_queue_threads.txt
-grep -rhw "create_workqueue" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue_threads.txt
-grep -rhw "create_freezable_workqueue" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue_threads.txt
-grep -rhw "create_singlethread_workqueue" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue_threads.txt
-grep -rhw "alloc_workqueue" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> work_queue_threads.txt
-
-echo "------------- workqueue threads -------------" >> contexts.txt
-cat work_queue_threads.txt | sort | uniq | grep -v '^*' >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "work_queue_threads.txt") -eq 0 ]; then
-    rm -f "work_queue_threads.txt"
-fi
+create_linux_kernel_work_queue_threads_csv()
+{
+	search_pattern "linux_kernel_work_queue_threads"
+	create_csv "linux_kernel_work_queue_threads"
+}
+create_linux_kernel_work_queue_threads_csv
 #====================================================================================================
 #IRQ threads
-echo "Extracting threads created using IRQ APIs..."
-
-rm -f irq_threads.txt
-grep -rhw "request_threaded_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > irq_threads.txt
-grep -rhw "devm_request_threaded_irq" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' >> irq_threads.txt
-
-echo "------------- IRQ threads -------------" >> contexts.txt
-cat irq_threads.txt | sort | uniq | grep -v '^*'  >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "irq_threads.txt") -eq 0 ]; then
-    rm -f "irq_threads.txt"
-fi
+create_linux_kernel_irq_threads_usage_list_csv()
+{
+	search_pattern "linux_kernel_irq_threads"
+	create_csv "linux_kernel_irq_threads"
+}
+create_linux_kernel_irq_threads_usage_list_csv
 #====================================================================================================
 #Eloop timers
-echo "Extracting Eloop Timers..."
-
-rm -f eloop_timers.txt
-grep -rhw "eloop_register_timeout" $DIR |  sed 's/^[ \t]*//' | sort | uniq | grep -v '^*' > eloop_timers.txt
-
-echo "------------- Eloop Timers -------------" >> contexts.txt
-cat eloop_timers.txt | sort | uniq | grep -v '^*' >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "eloop_timers.txt") -eq 0 ]; then
-    rm -f "eloop_timers.txt"
-fi
+create_eloop_timers_usage_list_csv()
+{
+	search_pattern "eloop_timers"
+	create_csv "eloop_timers"
+}
+create_eloop_timers_usage_list_csv
 #====================================================================================================
 #wpa supplicant events
-echo "Extracting wpa_supplicant_events..."
-
-rm -f wpa_supplicant_event.txt
-grep -rhw "wpa_supplicant_event" $DIR |  sed 's/^[ \t]*//' | sort | uniq  | grep -v '^*' > wpa_supplicant_event.txt
-
-echo "------------- wpa supplicant events -------------" >> contexts.txt
-cat wpa_supplicant_event.txt | sort | uniq | grep -v '^*' >> contexts.txt
-echo -e "\n" >> contexts.txt
-
-# Check if file size is 0 bytes
-if [ $(stat -c %s "wpa_supplicant_event.txt") -eq 0 ]; then
-    rm -f "wpa_supplicant_event.txt"
-fi
+create_wpa_supplicant_events_csv()
+{
+	search_pattern "wpa_supplicant_events"
+	create_csv "wpa_supplicant_events"
+}
+create_wpa_supplicant_events_csv
+#====================================================================================================
+#sockets list
+create_sockets_csv()
+{
+	search_pattern "sockets"
+	create_csv "sockets"
+}
+create_sockets_csv
 #====================================================================================================
