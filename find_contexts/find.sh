@@ -31,7 +31,7 @@ check_file_and_exit()
         fi
 }
 
-rm -f *.txt *.csv
+rm -f *.txt *.csv *.xlsx
 
 linux_kernel_spin_lock=("spin_lock_init" "raw_spin_lock_init" "DEFINE_SPINLOCK")
 linux_kernel_mutex=("mutex_init" "__mutex_init" "DEFINE_MUTEX")
@@ -54,7 +54,10 @@ create_csv()
 
         sed -i 's/\([^:]*:[^:]*\):[[:space:]]*\([[:print:]]\)/\1:\2/' temp.txt
         cat temp.txt  | grep -v '\"' | grep -v '^*' | sort | uniq > $1.txt
-        awk -F':' '{ print $1 "," $2 "," $3 }' $1.txt  > $1.csv
+        
+	echo ",,,,,," > $1.csv
+        
+	awk -F':' '{ print $1 "," $2 "," $3 }' $1.txt  >> $1.csv
         rm -f temp.txt
 
         echo "------------- $1 -------------" >> contexts.txt
@@ -197,4 +200,22 @@ create_sockets_csv()
 	create_csv "sockets"
 }
 create_sockets_csv
+#====================================================================================================
+combine_csvs()
+{
+	python3 ./combine_csvs.py
+}
+combine_csvs
+#====================================================================================================
+insert_rows_n_cols_in_csv()
+{
+	python3 ./insert_rows_n_cols_in_csv.py
+}
+insert_rows_n_cols_in_csv
+#====================================================================================================
+merge_first_row_in_csv()
+{
+	python3 ./merge_first_row_in_csv.py
+}
+merge_first_row_in_csv
 #====================================================================================================
