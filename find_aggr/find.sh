@@ -137,7 +137,7 @@ contexts=("timer_setup"
 
 data_structures=("SLIST_INIT" "STAILQ_INIT" "LIST_INIT" "TAILQ_INIT" "CIRCLEQ_INIT" "INIT_LIST_HEAD" "LIST_HEAD_INIT" "skb_queue_head_init" "__skb_queue_head_init" "DEFINE_HASHTABLE" "DEFINE_READ_MOSTLY_HASHTABLE" "DECLARE_HASHTABLE" "dl_list_init")
 
-ipcs=("wpa_supplicant_event")
+ipcs=("wpa_supplicant_event" "socket")
 
 create_csv()
 {
@@ -147,7 +147,7 @@ create_csv()
 
         sed -i 's/\([^:]*:[^:]*\):[[:space:]]*\([[:print:]]\)/\1:\2/' temp.txt
 	sed -i 's/[[:space:]]*$//'  temp.txt
-        cat temp.txt  | grep -v '\"' | grep -v '^*' | uniq >> $1.txt
+        cat temp.txt  | grep -v '\"' | grep -v '^*' | grep -v "#include" | uniq >> $1.txt
         
 	echo ",,,,,," >> $1.csv
         
