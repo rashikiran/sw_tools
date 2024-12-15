@@ -38,7 +38,7 @@ def merge_cells_in_range(file_path):
                 print(f"Filled merged cells C{row[2].row} to I{row[2].row} with sky blue color in sheet {sheet_name}.")
 
     # Save the modified workbook with the same name, but with 'modified_' prefix
-    output_file = 'modified_' + file_path
+    output_file = file_path
     workbook.save(output_file)
     print(f"Modified file saved as {output_file}")
 
