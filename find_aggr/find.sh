@@ -75,24 +75,31 @@ do
 done
 #======================================================================================================================
 
-locks=("spin_lock_init"
+locks=("SPIN_LOCK,Header" #---------------------------------
+	"spin_lock_init"
 	"raw_spin_lock_init"
 	"DEFINE_SPINLOCK"
+	"Mutex,Header" #---------------------------------
 	"mutex_init"
 	"__mutex_init"
 	"DEFINE_MUTEX"
+	"Semaphore,Header" #---------------------------------
 	"sema_init"
 	"DEFINE_SEMAPHORE")
 
-contexts=("timer_setup"
+contexts=("TIMER,Header" #---------------------------------
+	  "timer_setup"
 	  "timer_setup_on_stack"
 	  "DEFINE_TIMER"
+	  "eloop_register_timeout"
+	  "TASKLET,Header" #---------------------------------
 	  "tasklet_setup"
 	  "tasklet_init"
 	  "DECLARE_TASKLET"
 	  "DECLARE_TASKLET_DISABLED"
 	  "DECLARE_TASKLET_OLD"
 	  "DECLARE_TASKLET_DISABLED_OLD"
+	  "WORK_QUEUE,Header" #---------------------------------
 	  "INIT_WORK"
 	  "INIT_DELAYED_WORK"
 	  "INIT_WORK_ONSTACK"
@@ -104,12 +111,14 @@ contexts=("timer_setup"
 	  "DECLARE_WORK"
 	  "DECLARE_DELAYED_WORK"
 	  "DECLARE_DEFERRABLE_WORK"
+	  "KTHREAD_WORK,Header" #---------------------------------
 	  "KTHREAD_WORK_INIT"
 	  "KTHREAD_DELAYED_WORK_INIT"
 	  "DEFINE_KTHREAD_WORK"
 	  "DEFINE_KTHREAD_DELAYED_WORK"
 	  "kthread_init_work"
 	  "kthread_init_delayed_work"
+	  "IRQ,Header" #---------------------------------
 	  "request_irq"
 	  "request_threaded_irq"
 	  "request_any_context_irq"
@@ -119,6 +128,7 @@ contexts=("timer_setup"
 	  "devm_request_threaded_irq"
 	  "devm_request_irq"
 	  "devm_request_any_context_irq"
+	  "KTHREAD,Header" #---------------------------------
 	  "kthread_create_on_node"
 	  "kthread_create_on_cpu"
 	  "kthread_create"
@@ -126,14 +136,15 @@ contexts=("timer_setup"
 	  "kthread_run_on_cpu"
 	  "kthread_create_worker"
 	  "kthread_create_worker_on_cpu"
+	  "WORK_QUEUE_THREAD,Header" #---------------------------------
 	  "alloc_ordered_workqueue"
 	  "create_workqueue"
 	  "create_freezable_workqueue"
 	  "create_singlethread_workqueue"
 	  "alloc_workqueue"
+	  "IRQ_THREAD,Header" #---------------------------------
 	  "request_threaded_irq"
-	  "devm_request_threaded_irq"
-	  "eloop_register_timeout")
+	  "devm_request_threaded_irq")
 
 data_structures=("SLIST_INIT" "STAILQ_INIT" "LIST_INIT" "TAILQ_INIT" "CIRCLEQ_INIT" "INIT_LIST_HEAD" "LIST_HEAD_INIT" "skb_queue_head_init" "__skb_queue_head_init" "DEFINE_HASHTABLE" "DEFINE_READ_MOSTLY_HASHTABLE" "DECLARE_HASHTABLE" "dl_list_init")
 
@@ -170,8 +181,15 @@ search_pattern()
 
 	for pattern in "${selected_array[@]}";
 	do
-		echo "Searching for $pattern .... "
-		find $DIR -iname "*.[ch]" -print | xargs grep -nw "$pattern" |  sed 's/^[ \t]*//' | grep -v '^*' | uniq >> temp.txt
+		x=`echo $pattern | grep -i "Header"`
+		if [ "$x" ];
+		then
+			echo "Header cell found .... $pattern"
+			echo $pattern >> temp.txt
+		else
+			echo "Searching for $pattern ...."
+			find $DIR -iname "*.[ch]" -print | xargs grep -nw "$pattern" |  sed 's/^[ \t]*//' | grep -v '^*' | uniq >> temp.txt
+		fi
 	done
 
 	sed -i 's/[[:space:]]*$//'  temp.txt
@@ -233,4 +251,13 @@ merge_first_row_in_csv()
 	check_file_and_exit $DIR.xlsx
 }
 merge_first_row_in_csv
+#====================================================================================================
+merge_headers_in_csv()
+{
+	check_file_and_exit ./merge_headers.py
+	python3 ./merge_headers.py $DIR.xlsx
+	check_file_and_exit $DIR.xlsx
+}
+merge_headers_in_csv
+#libreoffice $DIR.xlsx
 #====================================================================================================
