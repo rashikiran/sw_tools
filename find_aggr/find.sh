@@ -87,10 +87,11 @@ locks=("SPIN_LOCK,Header" #---------------------------------
 	"sema_init"
 	"DEFINE_SEMAPHORE")
 
-contexts=("TIMER,Header" #---------------------------------
+contexts=("KERNEL_TIMER,Header" #---------------------------------
 	  "timer_setup"
 	  "timer_setup_on_stack"
 	  "DEFINE_TIMER"
+	  "APPLICATION_TIMER,Header" #---------------------------------
 	  "eloop_register_timeout"
 	  "TASKLET,Header" #---------------------------------
 	  "tasklet_setup"
@@ -146,9 +147,33 @@ contexts=("TIMER,Header" #---------------------------------
 	  "request_threaded_irq"
 	  "devm_request_threaded_irq")
 
-data_structures=("SLIST_INIT" "STAILQ_INIT" "LIST_INIT" "TAILQ_INIT" "CIRCLEQ_INIT" "INIT_LIST_HEAD" "LIST_HEAD_INIT" "skb_queue_head_init" "__skb_queue_head_init" "DEFINE_HASHTABLE" "DEFINE_READ_MOSTLY_HASHTABLE" "DECLARE_HASHTABLE" "dl_list_init")
+data_structures=("Singly-linked List,Header" #---------------------------------
+		"SLIST_INIT"
+		"Singly-linked Tail queue,Header" #---------------------------------
+		"STAILQ_INIT"
+		"LIST,Header" #---------------------------------
+		"LIST_INIT"
+		"TAILQ,Header" #---------------------------------
+		"TAILQ_INIT"
+		"CIRCULAR QUEUE,Header" #---------------------------------
+		"CIRCLEQ_INIT"
+		"Circular doubly linked list,Header" #---------------------------------
+		"INIT_LIST_HEAD"
+		"LIST_HEAD_INIT"
+		"SKB QUEUE,Header" #---------------------------------
+		"skb_queue_head_init"
+		"__skb_queue_head_init"
+		"HASH TABLE,Header" #---------------------------------
+		"DEFINE_HASHTABLE"
+		"DEFINE_READ_MOSTLY_HASHTABLE"
+		"DECLARE_HASHTABLE"
+		"DOUBLY LINKED LIST,Header" #---------------------------------
+		"dl_list_init")
 
-ipcs=("wpa_supplicant_event" "socket")
+ipcs=("WPA_SUPPLICANT_EVENT,Header" #---------------------------------
+      "wpa_supplicant_event"
+      "SOCKET,Header" #---------------------------------
+      "socket")
 
 create_csv()
 {
