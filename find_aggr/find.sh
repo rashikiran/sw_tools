@@ -223,11 +223,11 @@ create_csv()
 {
 	sudo rm -f $1.txt $1.csv
 
-	check_file_and_exit temp.txt
+	check_file_and_exit find_aggr_temp.txt
 
-        sed -i 's/\([^:]*:[^:]*\):[[:space:]]*\([[:print:]]\)/\1:\2/' temp.txt
-	sed -i 's/[[:space:]]*$//'  temp.txt
-        cat temp.txt  | grep -v '\"' | grep -v '^*' | grep -v "#include" | uniq >> $1.txt
+        sed -i 's/\([^:]*:[^:]*\):[[:space:]]*\([[:print:]]\)/\1:\2/' find_aggr_temp.txt
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+        cat find_aggr_temp.txt  | grep -v '\"' | grep -v '^*' | grep -v "#include" | uniq >> $1.txt
         
 	echo ",,,,,,,,,,,,,,,,,,,," >> $1.csv
         
@@ -241,7 +241,7 @@ create_csv()
 
 search_pattern()
 {
-	sudo rm -f temp.txt
+	sudo rm -f find_aggr_temp.txt
 
         echo "Extracting \"$1\" ... "
 
@@ -254,35 +254,159 @@ search_pattern()
 		if [ "$x" ];
 		then
 			echo "Header cell found .... $pattern"
-			echo $pattern >> temp.txt
+			echo $pattern >> find_aggr_temp.txt
 		else
 			echo "Searching for $pattern ...."
-			find $DIR -iname "*.[ch]" -print | xargs grep -nw "$pattern" |  sed 's/^[ \t]*//' | grep -v '^*' | uniq >> temp.txt
+			find $DIR -iname "*.[ch]" -print | xargs grep -nw "$pattern" |  sed 's/^[ \t]*//' | grep -v '^*' | uniq >> find_aggr_temp.txt
 		fi
 	done
 
-	sed -i 's/[[:space:]]*$//'  temp.txt
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
 }
 
 main_search_categories=("locks"
-			"contexts"
-			"data_structures"
-			"ipcs"
-			"events"
-			"HW"
-			"SW_src"
-			"SW_hdrs"
-			"SW_bins"
-			"SW_bin_OS_symbols"
-			"SW_src_OS_symbols")
+                        "contexts"
+                        "data_structures"
+                        "ipcs"
+                        "events"
+                        "HW"
+                        "SW_src"
+                        "SW_hdrs"
+                        "SW_bins"
+                        "SW_bin_OS_symbols"
+                        "SW_src_OS_symbols")
+
+locks_action()
+{
+	search_pattern "locks"
+	create_csv "locks"
+	check_file_and_exit "locks.csv"
+}			
+
+contexts_action()
+{
+	search_pattern "contexts"
+	create_csv "contexts"
+	check_file_and_exit "contexts.csv"
+}
+
+data_structures_action()
+{
+	search_pattern "data_structures"
+	create_csv "data_structures"
+	check_file_and_exit "data_structures.csv"
+}
+
+ipcs_action()
+{
+	search_pattern "ipcs"
+	create_csv "ipcs"
+	check_file_and_exit "ipcs.csv"
+}
+
+events_action()
+{
+	search_pattern "events"
+	create_csv "events"
+	check_file_and_exit "events.csv"
+}
+
+HW_action()
+{
+	echo "Extracting \"HW\" ... "
+
+	sudo rm -f find_aggr_temp.txt
+
+	for pattern in "${HW[@]}";
+	do
+		x=`echo $pattern | grep -i "Header"`
+		if [ "$x" ];
+		then
+			echo "Header cell found .... $pattern"
+			echo $pattern >> find_aggr_temp.txt
+		fi
+	done
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "HW"
+
+	check_file_and_exit "HW.csv"
+}
+
+SW_src_action()
+{
+	echo "Extracing \"SW_src\" ..."
+
+	sudo rm -f find_aggr_temp.txt
+
+	for i in `ls $DIR`;
+	do
+		if [ -d "$DIR/$i" ];
+		then
+			echo "$DIR/$i,Header"  >> find_aggr_temp.txt
+			find $DIR/$i >> find_aggr_temp.txt
+		fi
+	done
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "SW_src"
+
+	check_file_and_exit "SW_src.csv"
+}
+
+SW_hdrs_action()
+{
+	echo "Extracting \"SW_hdrs\" ..."
+
+	sudo rm -f find_aggr_temp.txt
+
+	for i in `ls $DIR`;
+	do
+		if [ -d "$DIR/$i" ];
+		then
+			check_file_and_exit ./find_headers.sh
+			./find_headers.sh $DIR/$i
+
+			echo "$DIR/$i Internal Hdrs,Header"  >> find_aggr_temp.txt
+
+			find $DIR/$i -iname "*.h" -print >> find_aggr_temp.txt
+
+			echo "$DIR/$i External Hdrs,Header"  >> find_aggr_temp.txt
+			check_file_and_exit res_include_headers_file_not_found_list.txt
+			cat res_include_headers_file_not_found_list.txt >> find_aggr_temp.txt
+		fi
+	done
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "SW_hdrs"
+
+	check_file_and_exit "SW_hdrs.csv"
+}
+
+SW_bins_action()
+{
+	echo "Extracting \"SW_bins\" ..."
+}
+
+SW_bin_OS_symbols_action()
+{
+	echo "Extracing \"SW_bin_OS_symbols\" ..."
+}
+
+SW_src_OS_symbols_action()
+{
+	echo "Extracting \"SW_src_OS_symbols_action\" ..."
+}
 
 start_analysis()
 {
 	for main_category in "${main_search_categories[@]}";
 	do
-		search_pattern "$main_category"
-		create_csv "$main_category"
-		check_file_and_exit "$main_category.csv"
+
+		"$main_category"_"action"
 	done
 }
 start_analysis
