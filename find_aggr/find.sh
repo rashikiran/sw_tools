@@ -75,32 +75,34 @@ do
 done
 #======================================================================================================================
 
-locks=("SPIN_LOCK,Header" #---------------------------------
+locks=("Linux SPIN_LOCK,Header" #---------------------------------
 	"spin_lock_init"
 	"raw_spin_lock_init"
 	"DEFINE_SPINLOCK"
-	"Mutex,Header" #---------------------------------
+	"Linux MUTEX,Header" #---------------------------------
 	"mutex_init"
 	"__mutex_init"
 	"DEFINE_MUTEX"
-	"Semaphore,Header" #---------------------------------
+	"Linux Semaphore,Header" #---------------------------------
 	"sema_init"
-	"DEFINE_SEMAPHORE")
+	"DEFINE_SEMAPHORE"
+	"Free-BSD MUTEX,Header" #---------------------------------
+	"mtx_init")
 
-contexts=("KERNEL_TIMER,Header" #---------------------------------
+contexts=("Linux KERNEL_TIMER,Header" #---------------------------------
 	  "timer_setup"
 	  "timer_setup_on_stack"
 	  "DEFINE_TIMER"
-	  "APPLICATION_TIMER,Header" #---------------------------------
+	  "Linux APPLICATION_TIMER,Header" #---------------------------------
 	  "eloop_register_timeout"
-	  "TASKLET,Header" #---------------------------------
+	  "Linux TASKLET,Header" #---------------------------------
 	  "tasklet_setup"
 	  "tasklet_init"
 	  "DECLARE_TASKLET"
 	  "DECLARE_TASKLET_DISABLED"
 	  "DECLARE_TASKLET_OLD"
 	  "DECLARE_TASKLET_DISABLED_OLD"
-	  "WORK_QUEUE,Header" #---------------------------------
+	  "Linux WORK_QUEUE,Header" #---------------------------------
 	  "INIT_WORK"
 	  "INIT_DELAYED_WORK"
 	  "INIT_WORK_ONSTACK"
@@ -112,14 +114,14 @@ contexts=("KERNEL_TIMER,Header" #---------------------------------
 	  "DECLARE_WORK"
 	  "DECLARE_DELAYED_WORK"
 	  "DECLARE_DEFERRABLE_WORK"
-	  "KTHREAD_WORK,Header" #---------------------------------
+	  "Linux KTHREAD_WORK,Header" #---------------------------------
 	  "KTHREAD_WORK_INIT"
 	  "KTHREAD_DELAYED_WORK_INIT"
 	  "DEFINE_KTHREAD_WORK"
 	  "DEFINE_KTHREAD_DELAYED_WORK"
 	  "kthread_init_work"
 	  "kthread_init_delayed_work"
-	  "IRQ,Header" #---------------------------------
+	  "Linux IRQ,Header" #---------------------------------
 	  "request_irq"
 	  "request_threaded_irq"
 	  "request_any_context_irq"
@@ -129,7 +131,7 @@ contexts=("KERNEL_TIMER,Header" #---------------------------------
 	  "devm_request_threaded_irq"
 	  "devm_request_irq"
 	  "devm_request_any_context_irq"
-	  "KTHREAD,Header" #---------------------------------
+	  "Linux KTHREAD,Header" #---------------------------------
 	  "kthread_create_on_node"
 	  "kthread_create_on_cpu"
 	  "kthread_create"
@@ -137,15 +139,23 @@ contexts=("KERNEL_TIMER,Header" #---------------------------------
 	  "kthread_run_on_cpu"
 	  "kthread_create_worker"
 	  "kthread_create_worker_on_cpu"
-	  "WORK_QUEUE_THREAD,Header" #---------------------------------
+	  "Linux WORK_QUEUE_THREAD,Header" #---------------------------------
 	  "alloc_ordered_workqueue"
 	  "create_workqueue"
 	  "create_freezable_workqueue"
 	  "create_singlethread_workqueue"
 	  "alloc_workqueue"
-	  "IRQ_THREAD,Header" #---------------------------------
+	  "Linux IRQ_THREAD,Header" #---------------------------------
 	  "request_threaded_irq"
-	  "devm_request_threaded_irq")
+	  "devm_request_threaded_irq"
+	  "Free-BSD Kthreads,Header" #---------------------------------
+	  "kproc_create"
+	  "Free-BSD TaskQ threads,Header" #---------------------------------
+	  "taskqueue_create"
+	  "Free-BSD TaskQ jobs,Header" #---------------------------------
+	  "TASK_INIT"
+	  "Free-BSD Timers,Header" #---------------------------------
+	  "callout_reset")
 
 data_structures=("Singly-linked List,Header" #---------------------------------
 		"SLIST_INIT"
@@ -170,10 +180,44 @@ data_structures=("Singly-linked List,Header" #---------------------------------
 		"DOUBLY LINKED LIST,Header" #---------------------------------
 		"dl_list_init")
 
-ipcs=("WPA_SUPPLICANT_EVENT,Header" #---------------------------------
-      "wpa_supplicant_event"
-      "SOCKET,Header" #---------------------------------
-      "socket")
+events=("WPA_SUPPLICANT_EVENT,Header" #---------------------------------
+	"wpa_supplicant_event"
+	"Linux Completion Variables,Header" #---------------------------------
+	"DECLARE_COMPLETION"
+	"DECLARE_COMPLETION_ONSTACK"
+	"DECLARE_COMPLETION_ONSTACK_MAP"
+	"init_completion"
+	"Linux Wait Queues,Header" #---------------------------------
+	"DECLARE_WAITQUEUE"
+	"DECLARE_WAIT_QUEUE_HEAD"
+	"init_waitqueue_head"
+	"DECLARE_WAIT_QUEUE_HEAD_ONSTACK"
+	"DEFINE_WAIT"
+	"init_wait"
+	"Linux SWAIT Queues,Header" #---------------------------------
+	"DECLARE_SWAITQUEUE"
+	"DECLARE_SWAIT_QUEUE_HEAD"
+	"init_swait_queue_head"
+	"DECLARE_SWAIT_QUEUE_HEAD_ONSTACK") 
+
+ipcs=("SOCKET,Header" #---------------------------------
+      "socket"
+      "Linux Shared Memory,Header" #---------------------------------
+      "shm_open"
+      "Linux Message Queues,Header" #---------------------------------
+      "msgget")
+
+HW=("Hardware Details,Header") #---------------------------------
+
+SW_src=("Source Files,Header") #---------------------------------
+
+SW_hdrs=("External Header Files,Header") #---------------------------------
+
+SW_bins=("Binary Files List,Header") #---------------------------------
+
+SW_bin_OS_symbols=("OS Symbol dependencies from NM,Header") #---------------------------------
+
+SW_src_OS_symbols=("OS Symbol dependencies from SRC,Header") #---------------------------------
 
 create_csv()
 {
@@ -185,7 +229,7 @@ create_csv()
 	sed -i 's/[[:space:]]*$//'  temp.txt
         cat temp.txt  | grep -v '\"' | grep -v '^*' | grep -v "#include" | uniq >> $1.txt
         
-	echo ",,,,,," >> $1.csv
+	echo ",,,,,,,,,,,,,,,,,,,," >> $1.csv
         
 	awk -F':' '{ print $1 "," $2 "," $3 }' $1.txt  >> $1.csv
 
@@ -220,38 +264,28 @@ search_pattern()
 	sed -i 's/[[:space:]]*$//'  temp.txt
 }
 
-#====================================================================================================
-create_locks_csv()
+main_search_categories=("locks"
+			"contexts"
+			"data_structures"
+			"ipcs"
+			"events"
+			"HW"
+			"SW_src"
+			"SW_hdrs"
+			"SW_bins"
+			"SW_bin_OS_symbols"
+			"SW_src_OS_symbols")
+
+start_analysis()
 {
-	search_pattern "locks"
-	create_csv "locks"
-	check_file_and_exit "locks.csv"
+	for main_category in "${main_search_categories[@]}";
+	do
+		search_pattern "$main_category"
+		create_csv "$main_category"
+		check_file_and_exit "$main_category.csv"
+	done
 }
-create_locks_csv
-#====================================================================================================
-create_contexts_csv()
-{
-	search_pattern "contexts"
-	create_csv "contexts"
-	check_file_and_exit "contexts.csv"
-}
-create_contexts_csv
-#====================================================================================================
-create_data_structures_csv()
-{
-	search_pattern "data_structures"
-	create_csv "data_structures"
-	check_file_and_exit "data_structures.csv"
-}
-create_data_structures_csv
-#====================================================================================================
-create_ipcs_csv()
-{
-	search_pattern "ipcs"
-	create_csv "ipcs"
-	check_file_and_exit "ipcs.csv"
-}
-create_ipcs_csv
+start_analysis
 #====================================================================================================
 combine_csvs()
 {
@@ -284,5 +318,6 @@ merge_headers_in_csv()
 	check_file_and_exit $DIR.xlsx
 }
 merge_headers_in_csv
+
 #libreoffice $DIR.xlsx
 #====================================================================================================
