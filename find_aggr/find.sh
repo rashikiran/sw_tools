@@ -399,6 +399,29 @@ SW_bin_OS_symbols_action()
 SW_src_OS_symbols_action()
 {
 	echo "Extracting \"SW_src_OS_symbols_action\" ..."
+
+	sudo rm -f find_aggr_temp.txt
+
+	for i in `ls $DIR`;
+	do
+		if [ -d "$DIR/$i" ];
+		then
+			check_file_and_exit ./find_callers.sh
+
+			echo "Checking SRC OS Symbols in dir $DIR/$i ..."
+			./find_callers.sh $DIR/$i
+
+			echo "$DIR/$i SRC OS symbols,Header"  >> find_aggr_temp.txt
+
+			cat res_fun_called_but_not_defined_list.txt >> find_aggr_temp.txt
+		fi
+	done
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "SW_src_OS_symbols"
+
+	check_file_and_exit "SW_src_OS_symbols.csv"
 }
 
 start_analysis()
