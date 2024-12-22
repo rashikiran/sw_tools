@@ -102,7 +102,7 @@ remove_single_line_macros_which_are_not_function_types_in_c_files()
 
 	for i in `find $DIR -iname "*.[ch]" -print`;
 	do
-		sed -i '/^#define[ \t]*[a-zA-Z_][a-zA-Z0-9_]*[ \t]*[^ (]/d' "$i"
+		sed -i '/^#define[ \t]\+[a-zA-Z_][a-zA-Z0-9_]*[ \t]\+/s/.*//'  "$i"
 	done
 }
 remove_single_line_macros_which_are_not_function_types_in_c_files
@@ -455,4 +455,19 @@ remove_c_preprocessor_keywords_listed_as_function_calls()
 	check_file_and_exit ./res_fun_called_but_not_defined_list.txt
 }
 remove_c_preprocessor_keywords_listed_as_function_calls
+#===================================================================================================================
+find_errors_in_data()
+{
+	cat $DIR/tags | awk '{print $1}' | sort | uniq > tags_def.txt
+	for i in `cat ./res_fun_called_but_not_defined_list.txt`;
+	do
+		x=`grep -w $i tags_def.txt`
+		if [ "$x" ];
+		then
+			echo "symbol $i :  is found in ctags definition .... review this ..."
+		fi
+	done
+
+}
+find_errors_in_data
 #===================================================================================================================
