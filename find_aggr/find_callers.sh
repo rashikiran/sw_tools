@@ -65,6 +65,20 @@ compile_tools()
 }
 compile_tools
 #======================================================================================================================
+remove_single_line_c_prototypes_step_1()
+{
+	echo "Preprocessing : Removing all single line prototypes ..."
+
+	check_dir_and_exit $DIR
+
+	for i in $(find $DIR -iname "*.[ch]"); do
+		sed -i '/^\s*return\s\+/!{ /^\s*\(static\s\+\)\?[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(.*);/d }' "$i"
+		sed -i '/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*)[ \t]*;$/d' "$i"
+		sed -z -i 's/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*\n*[^;]*);/\n/' "$i"
+	done
+}
+remove_single_line_c_prototypes_step_1
+#======================================================================================================================
 remove_single_line_strings_in_c_files()
 {
 	echo "Preprocessing : Removing all single line strings ..."
@@ -77,6 +91,20 @@ remove_single_line_strings_in_c_files()
 	done
 }
 remove_single_line_strings_in_c_files
+
+#======================================================================================================================
+remove_single_line_macros_which_are_not_function_types_in_c_files()
+{
+	echo "Preprocessing : Removing all single line macros which are nor function type macros ..."
+
+	check_dir_and_exit $DIR
+
+	for i in `find $DIR -iname "*.[ch]" -print`;
+	do
+		sed -i '/^#define[ \t]*[a-zA-Z_][a-zA-Z0-9_]*[ \t]*[^ (]/d' "$i"
+	done
+}
+remove_single_line_macros_which_are_not_function_types_in_c_files
 #======================================================================================================================
 remove_single_line_comments_in_c_files()
 {
