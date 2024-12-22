@@ -275,7 +275,46 @@ create_macros_def_list_fast_path()
 
 	grep -P '\s*\bd\b\s+\bfile:$' $DIR/tags | awk '{print $1}' >> macros_def_list.txt
 }
-create_macros_def_list_fast_path
+#create_macros_def_list_fast_path
+
+create_macros_fun_type_list()
+{
+	echo "Creating v1.0 of macros_def_list.txt ..."
+
+	rm -f macros_def_list.txt
+	rm -f macro_fun_type_def_list.txt
+	rm -f find_callers_temp.txt
+
+	check_dir_and_exit $DIR
+
+	#list only function like macros
+	grep -rni "#define .[a-zA-Z0-9_]*(" $DIR | cut -f 3 -d ":" | sort | sed 's/^[ \t]*//' | sort | uniq > macro_fun_type_def_list.txt
+
+	#remove extra spaces after #define. Keep only one space
+	sed -i 's/^#define[[:space:]]\+/#define /' macro_fun_type_def_list.txt
+
+	#remove all characters after (
+	sed -i 's/(.*//g' macro_fun_type_def_list.txt
+
+	#remove #define word
+	sed -i 's/^#define[[:space:]]*//g' macro_fun_type_def_list.txt
+
+	sort macro_fun_type_def_list.txt | uniq > find_callers_temp.txt
+
+	cat find_callers_temp.txt > macro_fun_type_def_list.txt
+
+	grep -o '\b[a-zA-Z_][a-zA-Z0-9_]*\b' macro_fun_type_def_list.txt > find_callers_temp.txt
+
+	cat find_callers_temp.txt > macro_fun_type_def_list.txt
+
+	cp macro_fun_type_def_list.txt ./macros_def_list.txt
+	
+	check_file_and_exit ./macro_fun_type_def_list.txt
+	check_file_and_exit ./macros_def_list.txt
+
+	rm -f find_callers_temp.txt
+}
+create_macros_fun_type_list
 #===================================================================================================================
 # Now explicilty check for #define of every line in res_fun_called_but_not_defined_list.txt
 remove_macros_listed_as_function_definition()
@@ -294,19 +333,6 @@ remove_macros_listed_as_function_definition()
 	    then
         	    echo "$line" >> find_callers_temp.txt 
 	    fi	
-	done
-
-	cat find_callers_temp.txt | sort | uniq > res_fun_called_but_not_defined_list.txt
-
-	rm -f find_callers_temp.txt
-
-	for line in `cat res_fun_called_but_not_defined_list.txt`
-	do
-	        x=`find $DIR -iname "*.[ch]" -print | xargs grep -rniw $line | grep "#define"`
-        	if [ ! "$x" ];
-        	then
-                	echo "$line" >> find_callers_temp.txt
-	        fi
 	done
 
 	cat find_callers_temp.txt | sort | uniq > res_fun_called_but_not_defined_list.txt
