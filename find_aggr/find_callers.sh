@@ -72,9 +72,10 @@ remove_single_line_c_prototypes_step_1()
 	check_dir_and_exit $DIR
 
 	for i in $(find $DIR -iname "*.[ch]"); do
+		sed -z -i  's/,\n/,/g' "$i"
 		sed -i '/^\s*return\s\+/!{ /^\s*\(static\s\+\)\?[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(.*);/d }' "$i"
 		sed -i '/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*)[ \t]*;$/d' "$i"
-		sed -z -i 's/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*\n*[^;]*);/\n/' "$i"
+		sed -i '/^\s*__attribute__.*[a-zA-Z_][a-zA-Z0-9_]*[ \t]*\([^)]*\n*[^;]*\);/d' "$i"
 	done
 }
 remove_single_line_c_prototypes_step_1
