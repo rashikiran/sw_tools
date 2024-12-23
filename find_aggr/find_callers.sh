@@ -479,17 +479,72 @@ remove_c_preprocessor_keywords_listed_as_function_calls()
 }
 remove_c_preprocessor_keywords_listed_as_function_calls
 #===================================================================================================================
-find_errors_in_data()
+fix_errors_in_data_tags()
 {
+	echo "Fixing errors : Based on tags ..."
+	rm -f fun_defs_found_in_ctags.txt
+
 	cat $DIR/tags | awk '{print $1}' | sort | uniq > tags_def.txt
 	for i in `cat ./res_fun_called_but_not_defined_list.txt`;
 	do
 		x=`grep -w $i tags_def.txt`
 		if [ "$x" ];
 		then
-			echo "symbol $i :  is found in ctags definition .... review this ..."
+			#echo "symbol $i :  is found in ctags definition .... review this ..."
+			echo $i >> fun_defs_found_in_ctags.txt 
 		fi
 	done
+
+	for i in `cat fun_defs_found_in_ctags.txt`;do
+		sed -i "s/\b$i\b//g" ./res_fun_called_but_not_defined_list.txt
+	done
+
+	sed -i '/^$/d' ./res_fun_called_but_not_defined_list.txt
 }
-find_errors_in_data
+fix_errors_in_data_tags
+#===================================================================================================================
+fix_errors_in_data_static()
+{
+	echo "Fixing errors : Based on static analysis ..."
+
+	rm -f find_callers_temp.txt
+
+	check_dir_and_exit $DIR
+	check_file_and_exit ./res_fun_called_but_not_defined_list.txt
+	check_file_and_exit ./find_fun_def
+
+	for fun_name in `cat ./res_fun_called_but_not_defined_list.txt`;
+	do
+		#echo "Checking function $fun_name"
+		#TODO: Consider passing $i only for whole words
+		for file_name in `find $DIR \( -iname "*.[c]" -o -iname "*.[c]pp" \) -print | xargs grep -lw $fun_name`;
+		do
+			x=`grep -w  $fun_name $file_name |  grep -v ";" | grep -v "="`
+			if [ "$x" ];then
+				echo $fun_name > t_fun.txt
+				./find_fun_def $file_name t_fun.txt >> find_callers_temp.txt
+				if [ $? -ne 0 ];then
+					echo "./find_fun_def failed"
+					exit 1
+				fi
+			fi
+		done
+	#	sleep 1
+	done
+
+	rm -f t_fun.txt
+
+	cat find_callers_temp.txt | sort | uniq > fixed_fun_def_list.txt
+
+	check_file_and_exit ./fixed_fun_def_list.txt
+
+	for i in `cat ./fixed_fun_def_list.txt`;do
+		sed -i "s/\b$i\b//g" ./res_fun_called_but_not_defined_list.txt
+	done
+
+	sed -i '/^$/d' ./res_fun_called_but_not_defined_list.txt
+
+	rm -f ./fixed_fun_def_list.txt
+}
+fix_errors_in_data_static
 #===================================================================================================================
