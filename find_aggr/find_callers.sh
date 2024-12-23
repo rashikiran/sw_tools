@@ -74,8 +74,10 @@ remove_single_line_c_prototypes_step_1()
 	for i in $(find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print); do
 		#Remove all spaces at the start of every line a file
                 sed -i 's/^[ \t]*//' "$i"
-
+		sed -z -i  's/(\n/(/g' "$i"
 		sed -z -i  's/,\n/,/g' "$i"
+		sed -z -i  's/\n(/(/g' "$i"
+		sed -z -i  's/\n)/)/g' "$i"
 		sed -i '/^\s*return\s\+/!{ /^\s*\(static\s\+\)\?[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(.*);/d }' "$i"
 		sed -i '/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*)[ \t]*;$/d' "$i"
 		sed -i '/^\s*__attribute__.*[a-zA-Z_][a-zA-Z0-9_]*[ \t]*\([^)]*\n*[^;]*\);/d' "$i"
@@ -131,9 +133,9 @@ remove_single_line_comments_in_c_files()
 }
 remove_single_line_comments_in_c_files
 #======================================================================================================================
-echo "Preprocessing : Removing all multi line comments ..."
 remove_multi_line_comments_in_c_files()
 {
+	echo "Preprocessing : Removing all multi line comments ..."
 	check_dir_and_exit $DIR
 	check_file_and_exit ./remove_c_comments
 
