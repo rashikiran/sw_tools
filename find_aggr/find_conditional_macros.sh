@@ -108,6 +108,9 @@ extract_conditional_macros()
 	#Remove all characters after ,
 	sed -i 's/,.*//' conditional_macros_list.txt
 
+	#Remove all characters after ,
+	sed -i 's/(.*//' conditional_macros_list.txt
+
 	cat conditional_macros_list.txt | sort | uniq > find_conditional_macros_temp.txt
 
 	cp find_conditional_macros_temp.txt conditional_macros_list.txt

@@ -97,7 +97,6 @@ remove_single_line_strings_in_c_files()
 	done
 }
 remove_single_line_strings_in_c_files
-
 #======================================================================================================================
 remove_single_line_macros_which_are_not_function_types_in_c_files()
 {
@@ -390,7 +389,7 @@ remove_c_keywords_listed_as_function_calls()
 
 	check_file_and_exit ./res_fun_called_but_not_defined_list.txt
 
-	cat res_fun_called_but_not_defined_list.txt | grep -vw "for" | grep -vw "while" | grep -vw "if" | grep -vw "switch"|  grep -vw "int" | grep -vw "char" | grep -vw "float" | grep -vw "double" | grep -vw "bool" | grep -vw "sizeof" | grep -vw "ssize_t" | grep -vw "u8" | grep -vw "u16"  | grep -vw "u32" | grep -vw "u64" | grep -vw "case" | grep -vw "size_t" | grep -vw "s8" | grep -vw "s16"  | grep -vw "s32" | grep -vw "s64"  | grep -vw "return" | grep -vw "void" | grep -vw "volatile" | grep -vw "uint8" | grep -vw "uint16"  | grep -vw "uint32" | grep -vw "uint64" > find_callers_temp.txt
+	cat res_fun_called_but_not_defined_list.txt | grep -vw "_Bool" | grep -vw "off_t" | grep -vw "int8_t" | grep -vw "int16_t" | grep -vw "int32_t" | grep -vw "int64_t" | grep -vw "else" | grep -vw "for" | grep -vw "while" | grep -vw "if" | grep -vw "switch"|  grep -vw "int" | grep -vw "char" | grep -vw "float" | grep -vw "double" | grep -vw "bool" | grep -vw "sizeof" | grep -vw "ssize_t" | grep -vw "u8" | grep -vw "u16"  | grep -vw "u32" | grep -vw "u64" | grep -vw "case" | grep -vw "size_t" | grep -vw "s8" | grep -vw "s16"  | grep -vw "s32" | grep -vw "s64"  | grep -vw "return" | grep -vw "void" | grep -vw "volatile" | grep -vw "uint8" | grep -vw "uint16"  | grep -vw "uint32" | grep -vw "uint64" > find_callers_temp.txt
 
 	cat find_callers_temp.txt | sort | uniq > res_fun_called_but_not_defined_list.txt
 
@@ -407,7 +406,7 @@ remove_c_compiler_attributes_listed_as_function_calls()
 
 	check_file_and_exit ./res_fun_called_but_not_defined_list.txt
 
-	cat res_fun_called_but_not_defined_list.txt | grep -vw "__align" | grep -vw "aligned" | grep -vw "__aligned" |  grep -vw "__aligned__" | grep -vw "__alignof__" | grep -vw "__attribute__" | grep -vw "likely"  | grep -vw "__acquire" | grep -vw "__acquires" | grep -vw "__builtin_choose_expr" | grep -vw "__builtin_constant_p" | grep -vw "__cond_lock" | grep -vw "__dynamic_array" | grep -vw "__field" | grep -vw "__get_dynamic_array" | grep -vw "__get_str" | grep -vw "__release" | grep -vw "__releases" | grep -vw "__section" | grep -vw "unlikely" | grep -vw "__stringify" | grep -vw "__assign_str" | grep -vw "__string" | grep -vw "__builtin_clz" | grep -vw "__get_unaligned_cpu32" | grep -vw "__asm" > find_callers_temp.txt
+	cat res_fun_called_but_not_defined_list.txt | grep -vw "__align" | grep -vw "aligned" | grep -vw "__aligned" |  grep -vw "__aligned__" | grep -vw "__alignof__" | grep -vw "__attribute__" | grep -vw "likely"  | grep -vw "__acquire" | grep -vw "__acquires" | grep -vw "__builtin_choose_expr" | grep -vw "__builtin_constant_p" | grep -vw "__cond_lock" | grep -vw "__dynamic_array" | grep -vw "__field" | grep -vw "__get_dynamic_array" | grep -vw "__get_str" | grep -vw "__release" | grep -vw "__releases" | grep -vw "__section" | grep -vw "unlikely" | grep -vw "__stringify" | grep -vw "__assign_str" | grep -vw "__string" | grep -vw "__builtin_clz" | grep -vw "__get_unaligned_cpu32" | grep -vw "__asm" | grep -vw "__asm__" | grep -vw "__ASM" | grep -vw "__ASMNAME" | grep -vw "_ATTRIBUTE" | grep -vw "_Pragma" | grep -vw "__alloc_align" | grep -vw "__alloc_size" | grep -vw "__alloc_size2" | grep -vw "__extension__" | grep -vw "__nonnull" > find_callers_temp.txt
 
 	grep -w "__align" ./res_fun_called_but_not_defined_list.txt > res_compiler_attributes.txt
 	grep -w "aligned" ./res_fun_called_but_not_defined_list.txt > res_compiler_attributes.txt
@@ -435,6 +434,16 @@ remove_c_compiler_attributes_listed_as_function_calls()
 	grep -w "__builtin_clz" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
 	grep -w "__get_unaligned_cpu32" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
 	grep -w "__asm" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__asm__" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__ASM" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__ASMNAME" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "_ATTRIBUTE" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "_Pragma" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__alloc_align" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__alloc_size" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__alloc_size2" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__extension__" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__nonnull" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
 
 	cat find_callers_temp.txt | sort | uniq > res_fun_called_but_not_defined_list.txt
 
