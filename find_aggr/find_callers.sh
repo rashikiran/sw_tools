@@ -79,7 +79,6 @@ remove_single_line_c_prototypes_step_1()
 		sed -z -i  's/\n(/(/g' "$i"
 		sed -z -i  's/\n)/)/g' "$i"
 		sed -i '/^\s*return\s\+/!{ /^\s*\(static\s\+\)\?[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(.*);/d }' "$i"
-		sed -i '/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*)[ \t]*;$/d' "$i"
 		sed -i '/^\s*__attribute__.*[a-zA-Z_][a-zA-Z0-9_]*[ \t]*\([^)]*\n*[^;]*\);/d' "$i"
 	done
 }
