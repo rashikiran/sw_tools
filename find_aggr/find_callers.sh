@@ -71,7 +71,7 @@ remove_single_line_c_prototypes_step_1()
 
 	check_dir_and_exit $DIR
 
-	for i in $(find $DIR -iname "*.[ch]"); do
+	for i in $(find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print); do
 		sed -z -i  's/,\n/,/g' "$i"
 		sed -i '/^\s*return\s\+/!{ /^\s*\(static\s\+\)\?[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(.*);/d }' "$i"
 		sed -i '/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*)[ \t]*;$/d' "$i"
@@ -86,7 +86,7 @@ remove_single_line_strings_in_c_files()
 
 	check_dir_and_exit $DIR
 
-	for i in `find $DIR -iname "*.[ch]" -print`;
+	for i in `find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print`;
 	do
 		sed -i 's/"[^"]*"/""/g' "$i"
 	done
@@ -100,8 +100,14 @@ remove_single_line_macros_which_are_not_function_types_in_c_files()
 
 	check_dir_and_exit $DIR
 
-	for i in `find $DIR -iname "*.[ch]" -print`;
+	for i in `find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print`;
 	do
+		#Remove all spaces at the start of every line a file
+		sed -i 's/^[ \t]*//' "$i"
+
+		#Remove all spaces between '#' and 'define'
+		sed -i 's/#\s*define/#define/' "$i"		
+
 		sed -i '/^#define[ \t]\+[a-zA-Z_][a-zA-Z0-9_]*[ \t]\+/s/.*//'  "$i"
 	done
 }
@@ -114,7 +120,7 @@ remove_single_line_comments_in_c_files()
 	check_dir_and_exit $DIR
 
 	# Find all .c and .h files recursively in the current directory.
-	find $DIR -type f \( -name "*.c" -o -name "*.h" \) | while read -r file; do
+	find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print | while read -r file; do
 	    # Use sed to remove only single-line comments.
 	    sed -i 's|//.*||g' "$file"
 	    #echo "Processed: $file"
@@ -128,7 +134,7 @@ remove_multi_line_comments_in_c_files()
 	check_dir_and_exit $DIR
 	check_file_and_exit ./remove_c_comments
 
-	for i in `find $DIR -iname "*.[ch]" -print`;
+	for i in `find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print`;
 	do
 		./remove_c_comments $i
 		if [ $? -ne 0 ];then
@@ -148,7 +154,7 @@ create_fun_call_list()
 
 	check_dir_and_exit $DIR
 
-	for i in `find $DIR -iname "*.[ch]" -print`;
+	for i in `find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print`;
 	do
 		egrep -o '\b[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(' $i | sed 's/[[:space:]]*(//' >> find_callers_temp.txt
 	done
@@ -174,7 +180,7 @@ create_fun_def_list_slow_path()
 	do
 		#echo "Checking function $fun_name"
 		#TODO: Consider passing $i only for whole words
-		for file_name in `find $DIR -iname "*.[ch]" -print | xargs grep -lw $fun_name`;
+		for file_name in `find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print | xargs grep -lw $fun_name`;
 		do
 			x=`grep -w  $fun_name $file_name |  grep -v ";" | grep -v "="`
 			if [ "$x" ];then
@@ -252,7 +258,7 @@ create_macros_def_list_slow_path()
 
 	check_dir_and_exit $DIR
 
-	for i in `find $DIR -iname "*.[ch]" -print`;
+	for i in `find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print`;
 	do
         	grep "#define " $i >> macros_def_list.txt
 	done
@@ -442,7 +448,7 @@ remove_c_preprocessor_keywords_listed_as_function_calls()
 	x=`cat res_fun_called_but_not_defined_list.txt | grep -w "defined"`
 
 	if [ "$x" ];then
-		x=`find $DIR -iname "*.[ch]" -print | xargs grep -rniw "defined"  | grep -v "#if"`
+		x=`find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print | xargs grep -rniw "defined"  | grep -v "#if"`
 
 		if [ ! "$x" ];then
 
