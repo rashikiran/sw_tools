@@ -34,6 +34,10 @@ check_file_and_exit()
 sudo rm -f *.txt *.csv *.xlsx
 
 #======================================================================================================================
+echo "Enable permissions for \"$DIR\" ..."
+
+sudo chmod 0777 -R *
+#======================================================================================================================
 echo "Compiling tools ..."
 
 check_file_and_exit ./remove_c_comments.c
@@ -274,7 +278,8 @@ main_search_categories=("locks"
                         "SW_hdrs"
                         "SW_bins"
                         "SW_bin_OS_symbols"
-                        "SW_src_OS_symbols")
+                        "SW_src_OS_symbols"
+			"SW_conditional_macros")
 
 locks_action()
 {
@@ -340,12 +345,19 @@ SW_src_action()
 
 	sudo rm -f find_aggr_temp.txt
 
+	echo "$DIR,Header"  >> find_aggr_temp.txt
+
 	for i in `ls $DIR`;
 	do
 		if [ -d "$DIR/$i" ];
 		then
 			echo "$DIR/$i,Header"  >> find_aggr_temp.txt
 			find $DIR/$i >> find_aggr_temp.txt
+		fi
+
+		if [ -f "$DIR/$i" ];
+		then
+			echo $DIR/$i >> find_aggr_temp.txt
 		fi
 	done
 
@@ -362,6 +374,8 @@ SW_hdrs_action()
 
 	sudo rm -f find_aggr_temp.txt
 
+	echo "$DIR Hdrs,Header"  >> find_aggr_temp.txt
+
 	for i in `ls $DIR`;
 	do
 		if [ -d "$DIR/$i" ];
@@ -376,6 +390,13 @@ SW_hdrs_action()
 			echo "$DIR/$i External Hdrs,Header"  >> find_aggr_temp.txt
 			check_file_and_exit res_include_headers_file_not_found_list.txt
 			cat res_include_headers_file_not_found_list.txt >> find_aggr_temp.txt
+		fi
+
+		if [ -f "$DIR/$i" ];
+		then
+			if [[ "$DIR/$i" == *.h ]]; then
+				echo $DIR/$i >> find_aggr_temp.txt
+			fi
 		fi
 	done
 
@@ -402,26 +423,57 @@ SW_src_OS_symbols_action()
 
 	sudo rm -f find_aggr_temp.txt
 
-	for i in `ls $DIR`;
-	do
-		if [ -d "$DIR/$i" ];
-		then
-			check_file_and_exit ./find_callers.sh
+	x=`find $DIR -mindepth 1 -type d | wc -l`
+	if [ "$x" -eq "0" ];then
+		echo "Checking SRC OS Symbols in dir \"$DIR\" ..."
+		./find_callers.sh $DIR
+		echo "$DIR SRC OS symbols,Header"  >> find_aggr_temp.txt
+		cat res_fun_called_but_not_defined_list.txt >> find_aggr_temp.txt
+	else
+		for i in `ls $DIR`;
+		do
+			if [ -d "$DIR/$i" ];
+			then
+				check_file_and_exit ./find_callers.sh
 
-			echo "Checking SRC OS Symbols in dir $DIR/$i ..."
-			./find_callers.sh $DIR/$i
+				echo "Checking SRC OS Symbols in dir \"$DIR/$i\" ..."
+				./find_callers.sh $DIR/$i
 
-			echo "$DIR/$i SRC OS symbols,Header"  >> find_aggr_temp.txt
+				echo "$DIR/$i SRC OS symbols,Header"  >> find_aggr_temp.txt
 
-			cat res_fun_called_but_not_defined_list.txt >> find_aggr_temp.txt
-		fi
-	done
+				cat res_fun_called_but_not_defined_list.txt >> find_aggr_temp.txt
+			fi
+		done
+	fi
+
+	check_file_and_exit find_aggr_temp.txt
 
 	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
 
 	create_csv "SW_src_OS_symbols"
 
 	check_file_and_exit "SW_src_OS_symbols.csv"
+}
+
+SW_conditional_macros_action()
+{
+	echo "Extracting \"SW_conditional_macros\" ..."
+
+	sudo rm -f find_aggr_temp.txt
+
+	./find_conditional_macros.sh $DIR
+
+	check_file_and_exit ./conditional_macros_list.txt
+
+	cat ./conditional_macros_list.txt >> find_aggr_temp.txt
+
+	check_file_and_exit find_aggr_temp.txt
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "SW_conditional_macros"
+
+	check_file_and_exit "SW_conditional_macros.csv"
 }
 
 start_analysis()

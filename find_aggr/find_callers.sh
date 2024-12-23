@@ -72,6 +72,9 @@ remove_single_line_c_prototypes_step_1()
 	check_dir_and_exit $DIR
 
 	for i in $(find $DIR \( -iname "*.[ch]" -o -iname "*.[ch]pp" \) -print); do
+		#Remove all spaces at the start of every line a file
+                sed -i 's/^[ \t]*//' "$i"
+
 		sed -z -i  's/,\n/,/g' "$i"
 		sed -i '/^\s*return\s\+/!{ /^\s*\(static\s\+\)\?[a-zA-Z_][a-zA-Z0-9_]*\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(.*);/d }' "$i"
 		sed -i '/^[a-zA-Z_][a-zA-Z0-9_]*\([ \t]*\**\([ \t]*[a-zA-Z_][a-zA-Z0-9_]*\)*\)*[ \t]*([^)]*)[ \t]*;$/d' "$i"
@@ -385,7 +388,7 @@ remove_c_keywords_listed_as_function_calls()
 
 	check_file_and_exit ./res_fun_called_but_not_defined_list.txt
 
-	cat res_fun_called_but_not_defined_list.txt | grep -vw "for" | grep -vw "while" | grep -vw "if" | grep -vw "switch"|  grep -vw "int" | grep -vw "char" | grep -vw "float" | grep -vw "double" | grep -vw "bool" | grep -vw "sizeof" | grep -vw "ssize_t" | grep -vw "u8" | grep -vw "u16"  | grep -vw "u32" | grep -vw "u64" | grep -vw "case" | grep -vw "size_t" | grep -vw "s8" | grep -vw "s16"  | grep -vw "s32" | grep -vw "s64"  | grep -vw "return" | grep -vw "void" > find_callers_temp.txt
+	cat res_fun_called_but_not_defined_list.txt | grep -vw "for" | grep -vw "while" | grep -vw "if" | grep -vw "switch"|  grep -vw "int" | grep -vw "char" | grep -vw "float" | grep -vw "double" | grep -vw "bool" | grep -vw "sizeof" | grep -vw "ssize_t" | grep -vw "u8" | grep -vw "u16"  | grep -vw "u32" | grep -vw "u64" | grep -vw "case" | grep -vw "size_t" | grep -vw "s8" | grep -vw "s16"  | grep -vw "s32" | grep -vw "s64"  | grep -vw "return" | grep -vw "void" | grep -vw "volatile" | grep -vw "uint8" | grep -vw "uint16"  | grep -vw "uint32" | grep -vw "uint64" > find_callers_temp.txt
 
 	cat find_callers_temp.txt | sort | uniq > res_fun_called_but_not_defined_list.txt
 
@@ -402,8 +405,9 @@ remove_c_compiler_attributes_listed_as_function_calls()
 
 	check_file_and_exit ./res_fun_called_but_not_defined_list.txt
 
-	cat res_fun_called_but_not_defined_list.txt | grep -vw "aligned" | grep -vw "__aligned" |  grep -vw "__aligned__" | grep -vw "__alignof__" | grep -vw "__attribute__" | grep -vw "likely"  | grep -vw "__acquire" | grep -vw "__acquires" | grep -vw "__builtin_choose_expr" | grep -vw "__builtin_constant_p" | grep -vw "__cond_lock" | grep -vw "__dynamic_array" | grep -vw "__field" | grep -vw "__get_dynamic_array" | grep -vw "__get_str" | grep -vw "__release" | grep -vw "__releases" | grep -vw "__section" | grep -vw "unlikely" | grep -vw "__stringify" | grep -vw "__assign_str" | grep -vw "__string" | grep -vw "__builtin_clz" | grep -vw "__get_unaligned_cpu32" > find_callers_temp.txt
+	cat res_fun_called_but_not_defined_list.txt | grep -vw "__align" | grep -vw "aligned" | grep -vw "__aligned" |  grep -vw "__aligned__" | grep -vw "__alignof__" | grep -vw "__attribute__" | grep -vw "likely"  | grep -vw "__acquire" | grep -vw "__acquires" | grep -vw "__builtin_choose_expr" | grep -vw "__builtin_constant_p" | grep -vw "__cond_lock" | grep -vw "__dynamic_array" | grep -vw "__field" | grep -vw "__get_dynamic_array" | grep -vw "__get_str" | grep -vw "__release" | grep -vw "__releases" | grep -vw "__section" | grep -vw "unlikely" | grep -vw "__stringify" | grep -vw "__assign_str" | grep -vw "__string" | grep -vw "__builtin_clz" | grep -vw "__get_unaligned_cpu32" | grep -vw "__asm" > find_callers_temp.txt
 
+	grep -w "__align" ./res_fun_called_but_not_defined_list.txt > res_compiler_attributes.txt
 	grep -w "aligned" ./res_fun_called_but_not_defined_list.txt > res_compiler_attributes.txt
 	grep -w "__aligned" ./res_fun_called_but_not_defined_list.txt > res_compiler_attributes.txt
 	grep -w "__aligned__" ./res_fun_called_but_not_defined_list.txt > res_compiler_attributes.txt
@@ -428,6 +432,7 @@ remove_c_compiler_attributes_listed_as_function_calls()
 	grep -w "__string" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
 	grep -w "__builtin_clz" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
 	grep -w "__get_unaligned_cpu32" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
+	grep -w "__asm" ./res_fun_called_but_not_defined_list.txt >> res_compiler_attributes.txt
 
 	cat find_callers_temp.txt | sort | uniq > res_fun_called_but_not_defined_list.txt
 
