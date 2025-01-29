@@ -91,7 +91,10 @@ locks=("Linux SPIN_LOCK,Header" #---------------------------------
 	"sema_init"
 	"DEFINE_SEMAPHORE"
 	"Free-BSD MUTEX,Header" #---------------------------------
-	"mtx_init")
+	"mtx_init"
+	"Linux APPLICATION_Locks,Header" #---------------------------------
+	"g_mutex_init"
+	"pthread_mutex_init")
 
 contexts=("Linux KERNEL_TIMER,Header" #---------------------------------
 	  "timer_setup"
@@ -99,6 +102,18 @@ contexts=("Linux KERNEL_TIMER,Header" #---------------------------------
 	  "DEFINE_TIMER"
 	  "Linux APPLICATION_TIMER,Header" #---------------------------------
 	  "eloop_register_timeout"
+	  "setitimer"
+	  "Linux APPLICATION_Threads,Header" #---------------------------------
+	  "fork"
+	  "vfork"
+	  "g_thread_create"
+	  "pthread_create"
+	  "execl"
+	  "execlp"
+	  "execv"
+	  "execve"
+	  "execvp"
+	  "popen"
 	  "Linux TASKLET,Header" #---------------------------------
 	  "tasklet_setup"
 	  "tasklet_init"
@@ -209,7 +224,10 @@ ipcs=("SOCKET,Header" #---------------------------------
       "Linux Shared Memory,Header" #---------------------------------
       "shm_open"
       "Linux Message Queues,Header" #---------------------------------
-      "msgget")
+      "msgget"
+      "Linux Files,Header" #---------------------------------
+      "fopen"
+      "open")
 
 HW=("Hardware Details,Header") #---------------------------------
 
