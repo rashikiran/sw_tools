@@ -97,7 +97,7 @@ remove_single_line_strings_in_c_files()
 		sed -i 's/"[^"]*"/""/g' "$i"
 	done
 }
-remove_single_line_strings_in_c_files
+#remove_single_line_strings_in_c_files
 #======================================================================================================================
 remove_single_line_macros_which_are_not_function_types_in_c_files()
 {

@@ -197,7 +197,24 @@ data_structures=("Singly-linked List,Header" #---------------------------------
 		"DEFINE_READ_MOSTLY_HASHTABLE"
 		"DECLARE_HASHTABLE"
 		"DOUBLY LINKED LIST,Header" #---------------------------------
-		"dl_list_init")
+		"dl_list_init"
+		"Allocations,Header" #---------------------------------
+		"malloc"
+		"calloc"
+		"realloc"
+		"g_malloc"
+		"g_malloc0"
+		"g_malloc0_n"
+		"g_realloc_n"
+		"json_node_alloc"
+		"wpabuf_alloc"
+		"os_malloc"
+		"os_calloc"
+		"os_zalloc"
+		"g_datalist,Header" #---------------------------------
+		"g_datalist_init"
+		"g_hash_table,Header" #---------------------------------
+		"g_hash_table_new")
 
 events=("WPA_SUPPLICANT_EVENT,Header" #---------------------------------
 	"wpa_supplicant_event"
@@ -217,7 +234,16 @@ events=("WPA_SUPPLICANT_EVENT,Header" #---------------------------------
 	"DECLARE_SWAITQUEUE"
 	"DECLARE_SWAIT_QUEUE_HEAD"
 	"init_swait_queue_head"
-	"DECLARE_SWAIT_QUEUE_HEAD_ONSTACK") 
+	"DECLARE_SWAIT_QUEUE_HEAD_ONSTACK"
+	"Linux SWAIT Queues,Header" #---------------------------------
+	"Linux DBUS Signals,Header"
+	"dbus_message_new_signal"
+	"Linux FD Signals,Header"
+	"select"
+	"pselect"
+	"poll"
+	"ppoll"
+	"epoll_wait")
 
 ipcs=("SOCKET,Header" #---------------------------------
       "socket"
@@ -227,7 +253,10 @@ ipcs=("SOCKET,Header" #---------------------------------
       "msgget"
       "Linux Files,Header" #---------------------------------
       "fopen"
-      "open")
+      "open"
+      "g_fopen"
+      "opendir"
+      "g_io_channel_unix_new")
 
 HW=("Hardware Details,Header") #---------------------------------
 
