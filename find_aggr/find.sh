@@ -221,7 +221,9 @@ SW_bins=("Binary Files List,Header") #---------------------------------
 
 SW_bin_OS_symbols=("OS Symbol dependencies from NM,Header") #---------------------------------
 
-SW_src_OS_symbols=("OS Symbol dependencies from SRC,Header") #---------------------------------
+fun_calls=("fun calls,Header") #---------------------------------
+
+fun_defs=("fun defs,Header") #---------------------------------
 
 create_csv()
 {
@@ -278,7 +280,8 @@ main_search_categories=("locks"
                         "SW_hdrs"
                         "SW_bins"
                         "SW_bin_OS_symbols"
-                        "SW_src_OS_symbols"
+                        "fun_calls"
+                        "fun_defs"
 			"SW_conditional_macros")
 
 locks_action()
@@ -417,29 +420,67 @@ SW_bin_OS_symbols_action()
 	echo "Extracing \"SW_bin_OS_symbols\" ..."
 }
 
-SW_src_OS_symbols_action()
+fun_defs_action()
 {
-	echo "Extracting \"SW_src_OS_symbols_action\" ..."
+	echo "Extracting \"fun_defs_action\" ..."
 
 	sudo rm -f find_aggr_temp.txt
 
+	check_file_and_exit ./find_defs.sh
+
 	x=`find $DIR -mindepth 1 -type d | wc -l`
 	if [ "$x" -eq "0" ];then
-		echo "Checking SRC OS Symbols in dir \"$DIR\" ..."
+		echo "Checking fun defs in dir \"$DIR\" ..."
+		./find_defs.sh $DIR
+
+		echo "$DIR fun defs,Header"  >> find_aggr_temp.txt
+		cat ./fun_def_list.txt >> find_aggr_temp.txt
+	else
+		for i in `ls $DIR`;
+		do
+			if [ -d "$DIR/$i" ];
+			then
+				echo "Checking fun defs in dir \"$DIR/$i\" ..."
+				./find_defs.sh $DIR/$i
+
+				echo "$DIR/$i fun defs,Header"  >> find_aggr_temp.txt
+				cat ./fun_def_list.txt >> find_aggr_temp.txt
+			fi
+		done
+	fi
+
+	check_file_and_exit find_aggr_temp.txt
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "fun_defs"
+
+	check_file_and_exit "fun_defs.csv"
+}
+
+fun_calls_action()
+{
+	echo "Extracting \"fun_calls_action\" ..."
+
+	sudo rm -f find_aggr_temp.txt
+
+	check_file_and_exit ./find_callers.sh
+
+	x=`find $DIR -mindepth 1 -type d | wc -l`
+	if [ "$x" -eq "0" ];then
+		echo "Checking fun calls in dir \"$DIR\" ..."
 		./find_callers.sh $DIR
-		echo "$DIR SRC OS symbols,Header"  >> find_aggr_temp.txt
+		echo "$DIR fun calls,Header"  >> find_aggr_temp.txt
 		cat res_fun_called_but_not_defined_list.txt >> find_aggr_temp.txt
 	else
 		for i in `ls $DIR`;
 		do
 			if [ -d "$DIR/$i" ];
 			then
-				check_file_and_exit ./find_callers.sh
-
-				echo "Checking SRC OS Symbols in dir \"$DIR/$i\" ..."
+				echo "Checking fun calls in dir \"$DIR/$i\" ..."
 				./find_callers.sh $DIR/$i
 
-				echo "$DIR/$i SRC OS symbols,Header"  >> find_aggr_temp.txt
+				echo "$DIR/$i fun calls,Header"  >> find_aggr_temp.txt
 
 				cat res_fun_called_but_not_defined_list.txt >> find_aggr_temp.txt
 			fi
@@ -450,9 +491,9 @@ SW_src_OS_symbols_action()
 
 	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
 
-	create_csv "SW_src_OS_symbols"
+	create_csv "fun_calls"
 
-	check_file_and_exit "SW_src_OS_symbols.csv"
+	check_file_and_exit "fun_calls.csv"
 }
 
 SW_conditional_macros_action()
