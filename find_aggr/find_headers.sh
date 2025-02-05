@@ -30,8 +30,6 @@ check_file_and_exit()
 }
 
 #======================================================================================================================
-echo "Preprocessing : Removing all single line strings .."
-
 rm -f find_headers_temp.txt
 
 temp_file="find_headers_temp.txt"

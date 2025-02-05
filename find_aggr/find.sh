@@ -44,14 +44,18 @@ check_file_and_exit ./remove_c_comments.c
 cc remove_c_comments.c -o remove_c_comments
 check_file_and_exit ./remove_c_comments
 #======================================================================================================================
-echo "Preprocessing : Removing all single line strings ..."
+remove_single_line_strings()
+{
+	echo "Preprocessing : Removing all single line strings ..."
 
-check_dir_and_exit $DIR
+	check_dir_and_exit $DIR
 
-for i in `find $DIR -iname "*.[ch]" -print`;
-do
-        sed -i 's/"[^"]*"/""/g' "$i"
-done
+	for i in `find $DIR -iname "*.[ch]" -print`;
+	do
+        	sed -i 's/"[^"]*"/""/g' "$i"
+	done
+}
+#remove_single_line_strings
 #======================================================================================================================
 echo "Preprocessing : Removing all single line comments ..."
 
@@ -103,17 +107,20 @@ contexts=("Linux KERNEL_TIMER,Header" #---------------------------------
 	  "Linux APPLICATION_TIMER,Header" #---------------------------------
 	  "eloop_register_timeout"
 	  "setitimer"
-	  "Linux APPLICATION_Threads,Header" #---------------------------------
+	  "Linux Processes,Header" #---------------------------------
 	  "fork"
 	  "vfork"
-	  "g_thread_create"
-	  "pthread_create"
 	  "execl"
 	  "execlp"
 	  "execv"
 	  "execve"
 	  "execvp"
+	  "Linux Pipe Processes,Header" #---------------------------------
 	  "popen"
+	  "Linux Gthreads,Header" #---------------------------------
+	  "g_thread_create"
+	  "Linux Pthreads,Header" #---------------------------------
+	  "pthread_create"
 	  "Linux TASKLET,Header" #---------------------------------
 	  "tasklet_setup"
 	  "tasklet_init"
@@ -180,6 +187,8 @@ data_structures=("Singly-linked List,Header" #---------------------------------
 		"SLIST_INIT"
 		"Singly-linked Tail queue,Header" #---------------------------------
 		"STAILQ_INIT"
+		"LInked List,Header" #---------------------------------
+		"ListInitialize"
 		"LIST,Header" #---------------------------------
 		"LIST_INIT"
 		"TAILQ,Header" #---------------------------------
@@ -198,18 +207,27 @@ data_structures=("Singly-linked List,Header" #---------------------------------
 		"DECLARE_HASHTABLE"
 		"DOUBLY LINKED LIST,Header" #---------------------------------
 		"dl_list_init"
-		"Allocations,Header" #---------------------------------
+		"malloc Allocations,Header" #---------------------------------
 		"malloc"
+		"calloc Allocations,Header" #---------------------------------
 		"calloc"
+		"realloc Allocations,Header" #---------------------------------
 		"realloc"
+		"g_malloc Allocations,Header" #---------------------------------
 		"g_malloc"
 		"g_malloc0"
 		"g_malloc0_n"
+		"g_realloc_n Allocations,Header" #---------------------------------
 		"g_realloc_n"
+		"json_node_alloc Allocations,Header" #---------------------------------
 		"json_node_alloc"
+		"wpabuf Allocations,Header" #---------------------------------
 		"wpabuf_alloc"
+		"os_malloc Allocations,Header" #---------------------------------
 		"os_malloc"
+		"os_calloc Allocations,Header" #---------------------------------
 		"os_calloc"
+		"os_zalloc Allocations,Header" #---------------------------------
 		"os_zalloc"
 		"g_datalist,Header" #---------------------------------
 		"g_datalist_init"
@@ -238,11 +256,15 @@ events=("WPA_SUPPLICANT_EVENT,Header" #---------------------------------
 	"Linux SWAIT Queues,Header" #---------------------------------
 	"Linux DBUS Signals,Header"
 	"dbus_message_new_signal"
-	"Linux FD Signals,Header"
+	"Linux select events,Header" #---------------------------------
 	"select"
+	"Linux pselect events,Header" #---------------------------------
 	"pselect"
+	"Linux poll events,Header" #---------------------------------
 	"poll"
+	"Linux ppoll events,Header" #---------------------------------
 	"ppoll"
+	"Linux epoll_wait events,Header" #---------------------------------
 	"epoll_wait")
 
 ipcs=("SOCKET,Header" #---------------------------------
@@ -251,11 +273,15 @@ ipcs=("SOCKET,Header" #---------------------------------
       "shm_open"
       "Linux Message Queues,Header" #---------------------------------
       "msgget"
-      "Linux Files,Header" #---------------------------------
+      "Linux fopen,Header" #---------------------------------
       "fopen"
+      "Linux open,Header" #---------------------------------
       "open"
+      "Linux g_fopen,Header" #---------------------------------
       "g_fopen"
+      "Linux opendir,Header" #---------------------------------
       "opendir"
+      "Linux g_io_channel_unix_new,Header" #---------------------------------
       "g_io_channel_unix_new")
 
 HW=("Hardware Details,Header") #---------------------------------
@@ -280,7 +306,8 @@ create_csv()
 
         sed -i 's/\([^:]*:[^:]*\):[[:space:]]*\([[:print:]]\)/\1:\2/' find_aggr_temp.txt
 	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
-        cat find_aggr_temp.txt  | grep -v '\"' | grep -v '^*' | grep -v "#include" | uniq >> $1.txt
+        #cat find_aggr_temp.txt  | grep -v '\"' | grep -v '^*' | grep -v "#include" | uniq >> $1.txt
+        cat find_aggr_temp.txt | grep -v '^*' | grep -v "#include" | uniq >> $1.txt
         
 	echo ",,,,,,,,,,,,,,,,,,,," >> $1.csv
         
@@ -310,7 +337,7 @@ search_pattern()
 			echo $pattern >> find_aggr_temp.txt
 		else
 			echo "Searching for $pattern ...."
-			find $DIR -iname "*.[ch]" -print | xargs grep -nw "$pattern" |  sed 's/^[ \t]*//' | grep -v '^*' | uniq >> find_aggr_temp.txt
+			find $DIR -iname "*.[ch]" -print | xargs grep -nw "$pattern" |  sed 's/^[ \t]*//' | grep -v '^*' | uniq | grep -i "$pattern(">> find_aggr_temp.txt
 		fi
 	done
 
@@ -329,7 +356,9 @@ main_search_categories=("locks"
                         "SW_bin_OS_symbols"
                         "fun_calls"
                         "fun_defs"
-			"SW_conditional_macros")
+			"SW_conditional_macros"
+			"SW_defined_macros"
+			"SW_make_defined_macros")
 
 locks_action()
 {
@@ -562,6 +591,48 @@ SW_conditional_macros_action()
 	create_csv "SW_conditional_macros"
 
 	check_file_and_exit "SW_conditional_macros.csv"
+}
+
+SW_defined_macros_action()
+{
+	echo "Extracting \"SW_defined_macros\" ..."
+
+	sudo rm -f find_aggr_temp.txt
+
+	./find_defined_macros.sh $DIR
+
+	check_file_and_exit ./defined_macros_list.txt
+
+	cat ./defined_macros_list.txt >> find_aggr_temp.txt
+
+	check_file_and_exit find_aggr_temp.txt
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "SW_defined_macros"
+
+	check_file_and_exit "SW_defined_macros.csv"
+}
+
+SW_make_defined_macros_action()
+{
+	echo "Extracting \"SW_make_defined_macros\" ..."
+
+	sudo rm -f find_aggr_temp.txt
+
+	./find_make_defined_macros.sh $DIR
+
+	check_file_and_exit ./make_defined_macros_list.txt
+
+	cat ./make_defined_macros_list.txt >> find_aggr_temp.txt
+
+	check_file_and_exit find_aggr_temp.txt
+
+	sed -i 's/[[:space:]]*$//'  find_aggr_temp.txt
+
+	create_csv "SW_make_defined_macros"
+
+	check_file_and_exit "SW_make_defined_macros.csv"
 }
 
 start_analysis()
